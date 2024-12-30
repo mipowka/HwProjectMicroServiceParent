@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: SaveIP
+
+  datasource:
+    username: root
+    password: mysql
+    url: jdbc:mysql://localhost:3306/testdb
+    driver-class-name: com.mysql.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+server:
+  port: 8081
