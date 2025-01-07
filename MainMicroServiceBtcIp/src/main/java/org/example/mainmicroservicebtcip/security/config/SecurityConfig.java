@@ -1,6 +1,9 @@
 package org.example.mainmicroservicebtcip.security.config;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.mainmicroservicebtcip.security.jwt.JwtAuthenticationFilter;
+import org.example.mainmicroservicebtcip.security.jwt.JwtTokenProvider;
 import org.example.mainmicroservicebtcip.security.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,11 +17,16 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
 
 @Slf4j
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -28,20 +36,23 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable);
         log.info("CSRF protection disabled for the application.");
 
+        http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+
         // Configuring authorization rules
         http.authorizeHttpRequests(authorizeRequests -> {
             authorizeRequests
                     .requestMatchers(HttpMethod.POST, "/main/create/user").hasRole("ADMIN")
                     .requestMatchers(HttpMethod.GET, "/main").hasRole("USER")
+                    .requestMatchers(HttpMethod.POST,"/login").permitAll()
                     .requestMatchers(HttpMethod.POST,"/main/create/admin").anonymous()
                     .anyRequest().authenticated();
 
             log.info("Authorization rules defined: POST '/main/create/user' requires ADMIN role, GET '/main' requires USER role, POST '/main/create/admin' is anonymous.");
         });
 
-        // Enabling HTTP Basic Authentication
-        http.httpBasic(Customizer.withDefaults());
-        log.info("HTTP Basic Authentication enabled for the application.");
+//        // Enabling HTTP Basic Authentication
+//        http.httpBasic(Customizer.withDefaults());
+//        log.info("HTTP Basic Authentication enabled for the application.");
 
         // Returning the configured HttpSecurity
         log.debug("SecurityFilterChain configuration completed.");
